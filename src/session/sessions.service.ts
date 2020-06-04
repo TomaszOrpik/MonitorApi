@@ -7,7 +7,6 @@ import { Model } from 'mongoose';
 export class SessionsService {
     constructor(@InjectModel('Session')
     private readonly sessionModel: Model<Session>) {}
-    //to add get all user sessions
 
     async insertSession(
         sessionId: string, 
@@ -28,7 +27,7 @@ export class SessionsService {
             counter => { visitCounter = counter as number; }
         );
         
-        const newSession = new this.sessionModel({
+        const newSession: Session = new this.sessionModel({
             userId: userId,
             sessionId: sessionId,
             userIp: userIp,
@@ -52,7 +51,7 @@ export class SessionsService {
     };
 
     async getAllSessions() {
-        const sessions = await this.sessionModel.find().exec();
+        const sessions: Session[] = await this.sessionModel.find().exec();
         return sessions.map((ss) => ({
             userId: ss.userId,
             sessionId: ss.sessionId,
@@ -72,7 +71,7 @@ export class SessionsService {
     };
 
     async getSingleSession(sessionId: string) {
-        const ss = await this.findSession(sessionId);
+        const ss: Session = await this.findSession(sessionId);
         return {
             userId: ss.userId,
             sessionId: ss.sessionId,
@@ -91,6 +90,28 @@ export class SessionsService {
         }
     };
 
+    async getAllUserSessions(userId: string) {
+        let sessions: Session[];
+        try { sessions = await this.sessionModel.find({ userId: userId }) }
+        catch(error) { throw new NotFoundException('User id not found'); }
+        return sessions.map((ss) => ({
+            userId: ss.userId,
+            sessionId: ss.sessionId,
+            userIp: ss.userIp,
+            visitsCounter: ss.visitCounter,
+            visitDate: ss.visitDate,
+            device: ss.device,
+            browser: ss.browser,
+            location: ss.location,
+            reffer: ss.reffer,
+            pages: ss.pages,
+            cartItems: ss.cartItems,
+            buyedItems: ss.buyedItems,
+            didLogged: ss.didLogged,
+            didContacted: ss.didContacted,           
+        }));
+    };
+
     async updateSession(
         userId: string,
         sessionId: string,
@@ -107,7 +128,7 @@ export class SessionsService {
         didLogged: boolean,
         didContacted: boolean,
     ) {
-        const updatedSession = await this.findSession(sessionId);
+        const updatedSession: Session = await this.findSession(sessionId);
         if(userId) updatedSession.userId = userId;
         if(userIp) updatedSession.userIp = userIp;
         if(visitCounter) updatedSession.visitCounter = visitCounter;
@@ -134,35 +155,35 @@ export class SessionsService {
     };
 
     async addSessionPages(sessionId: string, page: {name: string, timeOn: number}) {
-        const session = await this.findSession(sessionId);
+        const session: Session = await this.findSession(sessionId);
         session.pages.push(page);
 
         session.save();
     };
 
     async addSessionCartItems(sessionId: string, cartItems: {itemName: string, itemAction: string}) {
-        const session = await this.findSession(sessionId);
+        const session: Session = await this.findSession(sessionId);
         session.cartItems.push(cartItems);
 
         session.save();
     };
 
     async addSessionBuyedItems(sessionId: string, buyedItems: { itemName: string, itemQuantity: number}) {
-        const session = await this.findSession(sessionId);
+        const session: Session = await this.findSession(sessionId);
         session.buyedItems.push(buyedItems);
 
         session.save();
     };
 
     async updateSessionLogged(sessionId: string, status: boolean) {
-        const session = await this.findSession(sessionId);
+        const session: Session = await this.findSession(sessionId);
         session.didLogged = status;
 
         session.save();
     };
 
     async updateSessionContacted(sessionId: string, status: boolean) {
-        const session = await this.findSession(sessionId);
+        const session: Session = await this.findSession(sessionId);
         session.didContacted = status;
 
         session.save();
@@ -175,7 +196,7 @@ export class SessionsService {
 
     
     private async findSession(sessionId: string): Promise<Session> {
-        let session;
+        let session: Session;
         try { session = await this.sessionModel.findOne({ sessionId: sessionId }) }
         catch(error) { throw new NotFoundException('Could not find session') }
         if (!session) throw new NotFoundException('Could not find session');
@@ -183,13 +204,13 @@ export class SessionsService {
     };
     
     private async getUserId(usIp: string): Promise<string> {
-         const session = await this.sessionModel.findOne( { userIp: usIp });
+         const session: Session = await this.sessionModel.findOne( { userIp: usIp });
         if (!session) return '_' + Math.random().toString(36).substr(2, 9);
         else return session.userId as string;
     };
 
     private async getVisitCounter(usIp: string): Promise<number> {
-        const sessions = await this.sessionModel.find({ userIp: usIp });
+        const sessions: Session[] = await this.sessionModel.find({ userIp: usIp });
         return sessions.length + 1 as number;
     };
 }
