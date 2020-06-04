@@ -5,7 +5,9 @@ import { Model } from 'mongoose';
 
 @Injectable()
 export class SessionsService {
-    constructor(@InjectModel('Session') private readonly sessionModel: Model<Session>) {}
+    constructor(@InjectModel('Session')
+    private readonly sessionModel: Model<Session>) {}
+    //to add get all user sessions
 
     async insertSession(
         sessionId: string, 
@@ -43,8 +45,10 @@ export class SessionsService {
             didContacted: false,
         });
 
+        newSession.visitCounter = visitCounter;
+
         const result = await newSession.save();
-        return result.sessionId as string;
+        return result.sessionId;
     };
 
     async getAllSessions() {
@@ -186,6 +190,6 @@ export class SessionsService {
 
     private async getVisitCounter(usIp: string): Promise<number> {
         const sessions = await this.sessionModel.find({ userIp: usIp });
-        return sessions.length as number;
+        return sessions.length + 1 as number;
     };
 }

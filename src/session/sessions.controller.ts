@@ -14,7 +14,7 @@ export class SessionsController {
         @Body('device') device: string,
         @Body('browser') browser: string,
         @Body('location') location: string,
-        @Body('reffer') reffer: string,
+        @Body('reffer') reffer: string
     ) {
         const ssId = await this.sessionsService.insertSession(
             sessionId,
@@ -58,7 +58,7 @@ export class SessionsController {
             userId, 
             sessionId, 
             userIp, 
-            visitCounter, 
+            visitCounter,
             visitDate, 
             device, 
             browser, 

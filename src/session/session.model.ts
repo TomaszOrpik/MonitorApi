@@ -20,7 +20,7 @@ export const SessionSchema = new mongoose.Schema(
     userId: { type: String },
     sessionId: { type: String, required: true },
     userIp: { type: String, required: true },
-    visitsCounter: { type: Number },
+    visitCounter: { type: Number },
     visitDate: { type: String },
     device: { type: String },
     browser: { type: String },
@@ -30,7 +30,7 @@ export const SessionSchema = new mongoose.Schema(
     cartItems: [ cartItemsSchema ],
     buyedItems: [ buyedItemsSchema ],
     didLogged: { type: Boolean },
-    didContacted: { type: Boolean },
+    didContacted: { type: Boolean }
 }
 );
 
