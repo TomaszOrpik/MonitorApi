@@ -39,7 +39,6 @@ export class SessionsController {
 
     @Get('user/:id')
     getUserSessions(@Param('id') userId: string ) { return this.sessionsService.getAllUserSessions(userId); };
-
     @Patch(':id')
     async updateSession(
         @Param('id') sessionId: string,

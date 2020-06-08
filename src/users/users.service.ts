@@ -4,24 +4,29 @@ import { UserAverage, AllAverage } from './userAverage.model';
 import { InjectModel} from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Session } from '../session/session.model';
+import { SessionsService } from '../session/sessions.service';
 
 @Injectable()
 export class UsersService {
     constructor(@InjectModel('Session')
-    private readonly sessionModel: Model<Session>) {}
+    private readonly sessionModel: Model<Session>,
+    private readonly sessionsService: SessionsService) {}
 
     async getAllUsers() {
-        const users: Promise<UserAll>[] = [];
+        const users: UserAll[] = [];
         await this.getUsersList().then((usersId) => {
             usersId.forEach((userId) => {
-                const user = this.getUser(userId);
-                users.push(user);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const user = this.getUser(userId).then(userid => {
+                    users.push(userid);
+                })
             });
         });
         return users;
     }
 
     async getAvAllUsers() {
+        const allAverage = new AllAverage();
         const mostUsedDevices: string[] = [];
         const mostUsedBrowsers: string[] = [];
         const mostPopularLocations: string[] = [];
@@ -30,7 +35,6 @@ export class UsersService {
         const avCartActions: string[] = [];
         const avItemBuys: number[] = [];
         const mostlyLoggeds: boolean[] = [];
-        const allAverage = new AllAverage();
 
         const users = this.getUsersList();
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,38 +65,48 @@ export class UsersService {
 
     async getUser(userId: string) {
         const userAll = new UserAll();
-        let sessions: Promise<Session[]>;
-        let pages: [ { name: string, timeOn: number } ];
-        let buyedItems: [ { itemName: string, itemQuantity: number} ];
-        let noSortDevices: string[], noSortBrowsers: string[], noSortLocations: string[], noSortReffers: string[]; 
+        const pages: {name: string, timeOn: number}[] = [];
+        const buyedItems: { itemName: string, itemQuantity: number}[] = [];
+        const cartItems: { itemName: string, itemAction: string}[] = [];
+        const sessionIds: string[] = [];
+        const visitDates: string[] = [];
+        const noSortDevices: string[] = [], noSortBrowsers: string[] = [], noSortLocations: string[] = [], noSortReffers: string[] = []; 
         
-        try { sessions = this.sessionModel.find( { userId: userId } ).exec(); }
-        catch(error) { throw new NotFoundException('User not found!') };
-        
-        sessions.then( (sessionsArr) => {
-            userAll.visits = sessionsArr.length;
-            sessionsArr.forEach((session) => {
-                userAll.sessionIds.push(session.sessionId);
-                userAll.visitDates.push(session.visitDate);
-                noSortDevices.push(session.device);
-                noSortBrowsers.push(session.browser);
-                noSortLocations.push(session.location);
-                noSortReffers.push(session.reffer);
-                session.pages.forEach( (page) => pages.push(page));
-                session.cartItems.forEach( (cartItem) => userAll.cartItems.push(cartItem) );
-                session.buyedItems.forEach( (buyedItem) => buyedItems.push(buyedItem));
-                if (session.didLogged === true) userAll.loggedCounter = userAll.loggedCounter++;
-                if (session.didContacted === true) userAll.contactCounter = userAll.contactCounter++;
-            });
+
+        const sessions = await this.sessionsService.getAllUserSessions(userId);
+
+
+        sessions.forEach((session) => {
+            sessionIds.push(session.sessionId.toString());
+            visitDates.push(session.visitDate);
+            noSortDevices.push(session.device);
+            noSortBrowsers.push(session.browser);
+            noSortLocations.push(session.location);
+            noSortReffers.push(session.reffer);
+            session.pages.forEach((page) => pages.push(page));
+            session.cartItems.forEach((cartItem) => cartItems.push(cartItem));
+            session.buyedItems.forEach((buyedItem) => buyedItems.push(buyedItem));
         });
+        userAll.visits = sessions.length;
+        userAll.sessionIds = sessionIds;
+        userAll.visitDates = visitDates;
         userAll.devices = this.removeDuplicates(noSortDevices);
         userAll.browsers = this.removeDuplicates(noSortBrowsers);
         userAll.locations = this.removeDuplicates(noSortLocations);
         userAll.reffers = this.removeDuplicates(noSortReffers);
-        this.sumTimeOnPages(pages).forEach((sumPage) => { userAll.pages.push(sumPage); });
-        this.sumBuyedItems(buyedItems).forEach((sumItem) => { userAll.buyedItems.push(sumItem); });
-        
+        if(!(pages == null)) {
+            const sumPages: { name: string, timeOn: number}[] = this.sumTimeOnPages(pages);
+            userAll.pages = sumPages;
+        };
+        if(!(cartItems == null))
+            userAll.cartItems = cartItems;
+        if(!(buyedItems == null)) {
+            const sumBuyedItems = this.sumBuyedItems(buyedItems);
+            userAll.buyedItems = sumBuyedItems;
+        };
+
         return userAll;
+
     };
 
     async getAvUser(userId: string) {
@@ -144,36 +158,39 @@ export class UsersService {
         return item;
     };
 
-    private sumTimeOnPages( pages: [{ name: string, timeOn: number }]) {
+    private sumTimeOnPages( pages: { name: string, timeOn: number }[]) {
         // eslint-disable-next-line prefer-const
         let uniquePagesList = this.getUniquePages(pages);
-        pages.forEach((page) => {
-            for(let i = 0; i < uniquePagesList.length; i++) {
-                if(uniquePagesList[i].name === page.name) 
-                    uniquePagesList[i].timeOn = uniquePagesList[i].timeOn + page.timeOn;
-            }
-        });
+        if(!(pages == null))
+            pages.forEach((page) => {
+                for(let i = 0; i < uniquePagesList.length; i++) {
+                    if(uniquePagesList[i].name === page.name) 
+                        uniquePagesList[i].timeOn = uniquePagesList[i].timeOn + page.timeOn;
+                }
+            });
         return uniquePagesList;
     };
 
-    private sumBuyedItems(buyedItems: [{ itemName: string, itemQuantity: number }]) {
+    private sumBuyedItems(buyedItems:{ itemName: string, itemQuantity: number }[]) {
         // eslint-disable-next-line prefer-const
         let uniqueBuyedItemsList = this.getUniqueBuyedItems(buyedItems);
-        buyedItems.forEach((item) => {
-            for(let i = 0; i < uniqueBuyedItemsList.length; i++) {
-                if(uniqueBuyedItemsList[i].itemName === item.itemName)
-                    uniqueBuyedItemsList[i].itemQuantity = uniqueBuyedItemsList[i].itemQuantity + item.itemQuantity;
-            }
-        });
+        if(!(buyedItems == null))
+            buyedItems.forEach((item) => {
+                for(let i = 0; i < uniqueBuyedItemsList.length; i++) {
+                    if(uniqueBuyedItemsList[i].itemName === item.itemName)
+                        uniqueBuyedItemsList[i].itemQuantity = uniqueBuyedItemsList[i].itemQuantity + item.itemQuantity;
+                }
+            });
         return uniqueBuyedItemsList;
     };
 
-    private getUniquePages(pages: [{ name: string, timeOn: number }]) {
-        let uniquePagesList: [ { name:string, timeOn: number }];
+    private getUniquePages(pages: { name: string, timeOn: number }[]) {
+        const uniquePagesList: { name:string, timeOn: number }[] = [];
         const pagesWithDubs: string[] = [];
-        pages.forEach((page) => {
-            pagesWithDubs.push(page.name);
-        });
+        if(!(pages == null))
+            pages.forEach((page) => {
+                pagesWithDubs.push(page.name);
+            });
         const uniquePages = new Set(pagesWithDubs);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const uniquePagesArray = [...uniquePages]
@@ -184,12 +201,13 @@ export class UsersService {
 
     };
 
-    private getUniqueBuyedItems(buyedItems: [{ itemName: string, itemQuantity: number }]) {
-        let uniqueBuyedItemsList: [{ itemName: string, itemQuantity: number }];
+    private getUniqueBuyedItems(buyedItems: { itemName: string, itemQuantity: number }[]) {
+        const uniqueBuyedItemsList: { itemName: string, itemQuantity: number }[] = [];
         const itemsWithDubs: string[] = [];
-        buyedItems.forEach((item) => {
-            itemsWithDubs.push(item.itemName);
-        });
+        if(!(buyedItems == null))
+            buyedItems.forEach((item) => {
+                itemsWithDubs.push(item.itemName);
+            });
         const uniqueBuyedItems = new Set(itemsWithDubs);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const uniqueBuyedItemsArray = [...uniqueBuyedItems]

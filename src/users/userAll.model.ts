@@ -8,24 +8,18 @@ export class UserAll {
     browsers: string[];
     locations: string[];
     reffers: string[];
-    pages: [
-        {
+    pages: {
             name: string,
             timeOn: number
-        }
-    ];
-    cartItems: [
-        {
+        }[];
+    cartItems: {
             itemName: string,
             itemAction: string,
-        }
-    ];
-    buyedItems: [
-        {
+        }[];
+    buyedItems: {
             itemName: string,
             itemQuantity: number
-        }
-    ];
+        }[];
     loggedCounter: number;
     contactCounter: number;
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Session } from './session.model';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -16,9 +16,19 @@ export class SessionsService {
         browser: string, 
         location: string, 
         reffer: string
-        ) {     
+        ) {
+
         let userId: string;
         let visitCounter: number;
+
+        if(sessionId == null ||
+            userIp == null ||
+            visitDate == null ||
+            device == null ||
+            browser == null ||
+            location == null ||
+            reffer == null)
+            throw new BadRequestException('Empty body request, missing data');
         
         await this.getUserId(userIp).then(
             id => { userId = id as string; }
@@ -51,7 +61,7 @@ export class SessionsService {
     };
 
     async getAllSessions() {
-        const sessions: Session[] = await this.sessionModel.find().exec();
+        const sessions: Session[] = await this.sessionModel.find().lean();
         return sessions.map((ss) => ({
             userId: ss.userId,
             sessionId: ss.sessionId,
@@ -94,6 +104,7 @@ export class SessionsService {
         let sessions: Session[];
         try { sessions = await this.sessionModel.find({ userId: userId }) }
         catch(error) { throw new NotFoundException('User id not found'); }
+        if (sessions.length === 0) throw new NotFoundException('Could not find session');
         return sessions.map((ss) => ({
             userId: ss.userId,
             sessionId: ss.sessionId,
@@ -138,14 +149,17 @@ export class SessionsService {
         if(location) updatedSession.location = location;
         if(reffer) updatedSession.reffer = reffer;
         
-        for(let i = 0; i < pages.length; i++)
-            if(pages[i]) updatedSession.pages[i] = pages[i];
+        if(!(pages == null))
+            for(let i = 0; i < pages.length; i++)
+                if(pages[i]) updatedSession.pages[i] = pages[i];
         
+        if(!(cartItems == null))
         for(let i = 0; i < cartItems.length; i++)
             if(cartItems[i]) updatedSession.cartItems[i] = cartItems[i];
 
-        for(let i = 0; i < buyedItems.length; i++)
-            if(buyedItems[i]) updatedSession.buyedItems[i] = buyedItems[i];
+        if(!(buyedItems == null))
+            for(let i = 0; i < buyedItems.length; i++)
+                if(buyedItems[i]) updatedSession.buyedItems[i] = buyedItems[i];
 
         if(didLogged) updatedSession.didLogged = didLogged;
         if(didContacted) updatedSession.didContacted = didContacted;

@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-
+    //add empty data exception
     constructor(private readonly usersService: UsersService) { }
 
     @Get()
