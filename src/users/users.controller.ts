@@ -15,7 +15,7 @@ export class UsersController {
     @Get(':id')
     getUser(@Param('id') userId: string) { return this.usersService.getUser(userId); };
 
-    @Get('average')
+    @Get('all/average')
     async getAllAverage() {
         const avUsers = await this.usersService.getAvAllUsers();
         return avUsers;

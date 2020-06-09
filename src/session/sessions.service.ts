@@ -170,6 +170,9 @@ export class SessionsService {
 
     async addSessionPages(sessionId: string, page: {name: string, timeOn: number}) {
         const session: Session = await this.findSession(sessionId);
+        if(page.timeOn < 0) throw new BadRequestException('Time on page must be higher than 0');
+        if(typeof page.timeOn !== "number") throw new BadRequestException('Time on page incorrect format');
+        if(typeof page.name !== 'string') throw new BadRequestException('Incorrect page name format');
         session.pages.push(page);
 
         session.save();
@@ -177,6 +180,9 @@ export class SessionsService {
 
     async addSessionCartItems(sessionId: string, cartItems: {itemName: string, itemAction: string}) {
         const session: Session = await this.findSession(sessionId);
+        if(typeof sessionId !== 'string') throw new BadRequestException('Bad session id format');
+        if(cartItems.itemAction !== "Add" && cartItems.itemAction !== "Remove") throw new BadRequestException('Item action must be Add or Remove');
+        if(typeof cartItems.itemName !== 'string') throw new BadRequestException('Incorrect item name format');
         session.cartItems.push(cartItems);
 
         session.save();
@@ -184,6 +190,9 @@ export class SessionsService {
 
     async addSessionBuyedItems(sessionId: string, buyedItems: { itemName: string, itemQuantity: number}) {
         const session: Session = await this.findSession(sessionId);
+        if(buyedItems.itemQuantity <= 0) throw new BadRequestException('Item quantity must be higher than 0');
+        if(typeof buyedItems.itemQuantity !== "number") throw new BadRequestException('Item quantity incorrect format');
+        if(typeof buyedItems.itemName !== 'string') throw new BadRequestException('Incorrect item name format');
         session.buyedItems.push(buyedItems);
 
         session.save();
@@ -191,6 +200,8 @@ export class SessionsService {
 
     async updateSessionLogged(sessionId: string, status: boolean) {
         const session: Session = await this.findSession(sessionId);
+        if(typeof sessionId !== 'string') throw new BadRequestException('Incorrect sessiond Id format');
+        if(typeof status !== 'boolean') throw new BadRequestException('Incorrect statis format');
         session.didLogged = status;
 
         session.save();
@@ -198,6 +209,7 @@ export class SessionsService {
 
     async updateSessionContacted(sessionId: string, status: boolean) {
         const session: Session = await this.findSession(sessionId);
+        if(typeof status !== 'boolean') throw new BadRequestException('Incorrect format');
         session.didContacted = status;
 
         session.save();

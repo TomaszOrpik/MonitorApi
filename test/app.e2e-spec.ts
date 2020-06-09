@@ -137,7 +137,7 @@ describe('AppController (e2e)', () => {
 
   it('Gets averange data of all users', () => {
     return request(app.getHttpServer())
-    .get('/users/average')
+    .get('/users/all/average')
     .expect(200)
   });
 
@@ -180,17 +180,17 @@ describe('AppController (e2e)', () => {
       name: 'home',
       timeOn: '300'
     })
-    .expect(404)
+    .expect(400)
   });
 
-  it('Throws erro if time value is lower than zero', () => {
+  it('Throws error if time value is lower than zero', () => {
     return request(app.getHttpServer())
     .patch('/sessions/pages/_session1')
     .send({
       name: 'home',
       timeOn: -12
     })
-    .expect(404)
+    .expect(400)
   });
 
   it('Inserts item into user cart by session id', () => {
@@ -210,6 +210,7 @@ describe('AppController (e2e)', () => {
       itemName: 'Tomato',
       itemAction: 'Add'
     })
+    .expect(404)
   });
 
   it('Throws error if item is send with invalid data type', () => {
@@ -219,7 +220,7 @@ describe('AppController (e2e)', () => {
       itemName: 'Tomato',
       itemAction: true
     })
-    .expect(404)
+    .expect(400)
   });
 
   it('Throws error if item action is not Add/Remove', () => {
@@ -229,7 +230,7 @@ describe('AppController (e2e)', () => {
       itemName: 'Tomato',
       itemAction: 'Changed'
     })
-    .expect(404)
+    .expect(400)
   });
 
   it('Insert data into sessions buyed items array by session id', () => {
@@ -259,7 +260,7 @@ describe('AppController (e2e)', () => {
       itemName: 'Tomato',
       itemQuantity: '2'
     })
-    .expect(404)
+    .expect(400)
   });
 
   it('Throws error if item quantity is lower than zero', () => {
@@ -269,7 +270,7 @@ describe('AppController (e2e)', () => {
       itemName: 'Tomato',
       itemQuantity: -1
     })
-    .expect(404)
+    .expect(400)
   });
 
   it('Changes logged status to true by session id', () => {
@@ -296,7 +297,7 @@ describe('AppController (e2e)', () => {
     .send({
       isLogged: 'true'
     })
-    .expect(404)
+    .expect(400)
   })
 
   it('Changes contacted status to true by session id', () => {
@@ -314,7 +315,7 @@ describe('AppController (e2e)', () => {
     .send({
       isContacted: true
     })
-    .expect(200)
+    .expect(404)
   });
 
   it('Throw error if change contacted status have invalid data', () => {
@@ -323,7 +324,7 @@ describe('AppController (e2e)', () => {
     .send({
       isContacted: 'true'
     })
-    .expect(404)
+    .expect(400)
   });
 
   it('removes session by session id', () => {

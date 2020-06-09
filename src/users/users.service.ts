@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserAll } from './userAll.model';
 import { UserAverage, AllAverage } from './userAverage.model';
 import { InjectModel} from '@nestjs/mongoose';
@@ -24,9 +24,9 @@ export class UsersService {
         });
         return users;
     }
-
+    //av cart action wyrzuca jako undefined
     async getAvAllUsers() {
-        const allAverage = new AllAverage();
+
         const mostUsedDevices: string[] = [];
         const mostUsedBrowsers: string[] = [];
         const mostPopularLocations: string[] = [];
@@ -36,32 +36,54 @@ export class UsersService {
         const avItemBuys: number[] = [];
         const mostlyLoggeds: boolean[] = [];
 
-        const users = this.getUsersList();
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const result = (await users).forEach((user) => {
-            const userData = this.getAvUser(user);
-            userData.then((data: UserAverage) => {
-                mostUsedDevices.push(data.mostUsedDevice);
-                mostUsedBrowsers.push(data.mostUsedBrowser);
-                mostPopularLocations.push(data.mostPopularLocation);
-                mostPopularReffers.push(data.mostPopularReffer);
-                averageTimeOnPages.push(data.averageTimeOnPages);
-                avCartActions.push(data.avCartAction);
-                avItemBuys.push(data.avItemBuy);
-                mostlyLoggeds.push(data.mostlyLogged);
-            });
-        });
-        allAverage.mostUsedDevice = this.getMostPopular(mostUsedDevices);
-        allAverage.mostUsedBrowser = this.getMostPopular(mostUsedBrowsers);
-        allAverage.mostPopularLocation = this.getMostPopular(mostPopularLocations);
-        allAverage.mostPopularReffer = this.getMostPopular(mostPopularReffers);
+        const users = await this.getUsersList();
+
+        await Promise.all(users.map(async (user) => {
+            const userData = await this.getAvUser(user);
+            mostUsedDevices.push(userData.mostUsedDevice);
+            mostUsedBrowsers.push(userData.mostUsedBrowser);
+            mostPopularLocations.push(userData.mostPopularLocation);
+            mostPopularReffers.push(userData.mostPopularReffer);
+            averageTimeOnPages.push(userData.averageTimeOnPages);
+            avCartActions.push(userData.avCartAction);
+            avItemBuys.push(userData.avItemBuy);
+            mostlyLoggeds.push(userData.mostlyLogged);
+        }))
+
+        return await this.getMostOfAv(
+            mostUsedDevices,
+            mostUsedBrowsers,
+            mostPopularLocations,
+            mostPopularReffers,
+            averageTimeOnPages,
+            avCartActions,
+            avItemBuys,
+            mostlyLoggeds);
+    };
+
+    private async getMostOfAv(
+        mostUsedDevices: string[] = [],
+        mostUsedBrowsers: string[] = [],
+        mostPopularLocations: string[] = [],
+        mostPopularReffers: string[] = [],
+        averageTimeOnPages: number[] = [],
+        avCartActions: string[] = [],
+        avItemBuys: number[] = [],
+        mostlyLoggeds: boolean[] = []
+    ) {
+        const allAverage = new AllAverage();
+
+        allAverage.mostUsedDevice = await this.getMostPopular(mostUsedDevices);
+        allAverage.mostUsedBrowser = await this.getMostPopular(mostUsedBrowsers);
+        allAverage.mostPopularLocation = await this.getMostPopular(mostPopularLocations);
+        allAverage.mostPopularReffer = await this.getMostPopular(mostPopularReffers);
         allAverage.averageTimeOnPages = this.getAverage(averageTimeOnPages);
-        allAverage.avCartAction = this.getMostPopular(avCartActions);
+        allAverage.avCartAction = await this.getMostPopular(avCartActions);
         allAverage.avItemBuy = this.getAverage(avItemBuys);
-        allAverage.mostlyLogged = this.getMostPopular(mostlyLoggeds);
+        allAverage.mostlyLogged = await this.getMostPopularBool(mostlyLoggeds);
 
         return allAverage;
-    };
+    }
 
     async getUser(userId: string) {
         const userAll = new UserAll();
@@ -111,51 +133,75 @@ export class UsersService {
 
     async getAvUser(userId: string) {
         const userAverage = new UserAverage();
-        let sessions: Promise<Session[]>;
-        let ips: string[],devices: string[], browsers: string[], locations: string[], reffers: string[], loggeds: boolean[];
-        let timeOnPages: number[], cartActions: string[], buyedItemsCount: number[];
+        const ips: string[] =[],devices: string[] = [], browsers: string[] = [], locations: string[] = [], reffers: string[] = [], loggeds: boolean[] = [];
+        const timeOnPages: number[] = [], cartActions: string[] = [], buyedItemsCount: number[] = [];
 
-        try { sessions = this.sessionModel.find( { userId: userId } ).exec(); }
-        catch(error) { throw new NotFoundException('User not found!') };
-        sessions.then((sessionsArr) => {
-            sessionsArr.forEach((session) => {
-                ips.push(session.userIp);
-                devices.push(session.device);
-                browsers.push(session.browser);
-                locations.push(session.location);
-                reffers.push(session.reffer);
-                session.pages.forEach((page) => { timeOnPages.push(page.timeOn); });
-                session.cartItems.forEach((cartItem) => { cartActions.push(cartItem.itemAction); });
-                session.buyedItems.forEach((buyedItem) => { buyedItemsCount.push(buyedItem.itemQuantity); });
-                loggeds.push(session.didLogged);
-            });
-        });
+        const sessions = await this.sessionsService.getAllUserSessions(userId);
+
+        sessions.forEach((session) => {
+            ips.push(session.userIp);
+            devices.push(session.device);
+            browsers.push(session.browser);
+            locations.push(session.location);
+            reffers.push(session.reffer);
+            session.pages.forEach((page) => { timeOnPages.push(page.timeOn); });
+            session.cartItems.forEach((cartItem) => { cartActions.push(cartItem.itemAction); });
+            session.buyedItems.forEach((buyedItem) => { buyedItemsCount.push(buyedItem.itemQuantity); });
+            loggeds.push(session.didLogged);
+        })
+
         userAverage.userId = userId;
-        userAverage.userIp = this.getMostPopular(ips);
-        userAverage.mostUsedDevice = this.getMostPopular(devices);
-        userAverage.mostUsedBrowser = this.getMostPopular(browsers);
-        userAverage.mostPopularLocation = this.getMostPopular(locations);
-        userAverage.mostPopularReffer = this.getMostPopular(reffers);
+        userAverage.userIp = await this.getMostPopular(ips);
+        userAverage.mostUsedDevice = await this.getMostPopular(devices);
+        userAverage.mostUsedBrowser = await this.getMostPopular(browsers);
+        userAverage.mostPopularLocation = await this.getMostPopular(locations);
+        userAverage.mostPopularReffer = await this.getMostPopular(reffers);
         userAverage.averageTimeOnPages = this.getAverage(timeOnPages);
-        userAverage.avCartAction = this.getMostPopular(cartActions);
+        userAverage.avCartAction = await this.getMostPopular(cartActions);
         userAverage.avItemBuy = this.getAverage(buyedItemsCount);
-        userAverage.mostlyLogged = this.getMostPopular(loggeds);
+        userAverage.mostlyLogged = await this.getMostPopularBool(loggeds);
 
         return userAverage;
     };
 
-    private getMostPopular(array): any {
-        let mf = 1, m = 0, item: string|number|boolean;
-        for(let i = 0; i < array.length; i++) {
-            for(let j = i; j < array.length; j++) {
-                if (array[i] === array[j]) m++;
-                if (mf < m) {
-                    mf = m;
-                    item = array[i];
-                };
-            };
-        };
-        return item;
+    private async getMostPopular(array: string[] = []): Promise<string> {
+        const frequency = {};
+        let max = 0;
+        let result: string[] = [];
+        array.forEach(function (a) {
+            frequency[a] = (frequency[a] || 0) + 1;
+            if (frequency[a] > max) {
+                max = frequency[a];
+                result = [a];
+                return;
+            }
+            if (frequency[a] === max) {
+                result.push(a);
+            }
+        });
+        return result[0];
+    };
+
+    private async getMostPopularBool(array: boolean[] = []): Promise<boolean> {
+        const frequency = {};
+        let max = 0;
+        let result: number[] = [];
+        array.forEach(function (value) {
+            let a;
+            if(value === true) a = 1;
+            else a = 0;
+            frequency[a] = (frequency[a] || 0) + 1;
+            if (frequency[a] > max) {
+                max = frequency[a];
+                result = [a];
+                return;
+            }
+            if (frequency[a] === max) {
+                result.push(a);
+            }
+        });
+        if(result[0] === 1) return true;
+        else return false;
     };
 
     private sumTimeOnPages( pages: { name: string, timeOn: number }[]) {
@@ -224,9 +270,9 @@ export class UsersService {
         return arraySorted;
     };
 
-    private getAverage(array): number { return (this.getSum(array) / array.length) || 0; };
+    private getAverage(array: number[] = []): number { return (this.getSum(array) / array.length) || 0; };
 
-    private getSum(array): number { return array.reduce((a, b) => a + b, 0); };
+    private getSum(array: number[] = []): number { return array.reduce((a, b) => a + b, 0); };
 
     private async getUsersList() {
 
