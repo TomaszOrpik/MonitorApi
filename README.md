@@ -23,7 +23,6 @@ List of API routes:
 
 | resource      | requirements        |result        |
 |:--------------|:--------------------|:-------------|
-
 | Get `/users` | None | Returns from database full data of all users and all sessions of them |
 | Get `/users/:id` | User id | Returns from database data of all sessions of selected user as one Json object|
 | Get `/users/all/average` | None | Returns from database average data of all sessions |
