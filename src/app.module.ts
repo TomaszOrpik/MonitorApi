@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { SessionsModule } from './session/sessions.module';
-import { UsersModule } from './users/users.module';
+import { SessionsModule } from './Modules/sessions.module';
+import { UsersModule } from './Modules/users.module';
 
 @Module({
   imports: [SessionsModule, UsersModule, MongooseModule.forRoot(

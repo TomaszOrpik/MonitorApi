@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { UserAll } from './userAll.model';
-import { UserAverage, AllAverage } from './userAverage.model';
+import { UserAll } from '../Models/userAll.model';
+import { UserAverage, AllAverage } from '../Models/userAverage.model';
 import { InjectModel} from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Session } from '../session/session.model';
-import { SessionsService } from '../session/sessions.service';
+import { Session } from '../Models/session.model';
+import { SessionsService } from './sessions.service';
 
 @Injectable()
 export class UsersService {

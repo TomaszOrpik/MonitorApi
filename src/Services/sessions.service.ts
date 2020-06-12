@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Session } from './session.model';
+import { Session } from '../Models/session.model';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
