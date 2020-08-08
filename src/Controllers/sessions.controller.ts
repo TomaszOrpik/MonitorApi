@@ -1,5 +1,11 @@
 import { Controller, Post, Body, Get, Param, Patch, Delete } from '@nestjs/common';
 import { SessionsService } from '../Services/sessions.service';
+import { SessionDto } from 'src/Models/session.dto';
+import { fullSessionDto } from 'src/Models/fullSession.dto';
+import { Page } from 'src/Models/page.dto';
+import { CartItem } from 'src/Models/cartItem.dto';
+import { BuyedItem } from 'src/Models/buyedItem.dto';
+import { SessionScrap } from 'src/Models/sessionScrap.dto';
 
 @Controller('sessions')
 export class SessionsController {
@@ -8,22 +14,16 @@ export class SessionsController {
 
     @Post()
     async insertSession(
-        @Body('sessionId') sessionId: string,
-        @Body('userIp') userIp: string,
-        @Body('visitDate') visitDate: string,
-        @Body('device') device: string,
-        @Body('browser') browser: string,
-        @Body('location') location: string,
-        @Body('reffer') reffer: string
+        @Body() session: SessionDto
     ) {
         const ssId = await this.sessionsService.insertSession(
-            sessionId,
-            userIp,
-            visitDate,
-            device,
-            browser,
-            location,
-            reffer
+            session.sessionId,
+            session.userIp,
+            session.visitDate,
+            session.device,
+            session.browser,
+            session.location,
+            session.reffer
         );
         return ssId;
     };
@@ -39,38 +39,28 @@ export class SessionsController {
 
     @Get('user/:id')
     getUserSessions(@Param('id') userId: string ) { return this.sessionsService.getAllUserSessions(userId); };
+    
     @Patch(':id')
     async updateSession(
         @Param('id') sessionId: string,
-        @Body('userId') userId: string,
-        @Body('userIp') userIp: string,
-        @Body('visitCounter') visitCounter: number,
-        @Body('visitDate') visitDate: string,
-        @Body('device') device: string,
-        @Body('browser') browser: string,
-        @Body('location') location: string,
-        @Body('reffer') reffer: string,
-        @Body('pages') pages: [{ name: string, timeOn: number}],
-        @Body('cartItems') cartItems: [{ itemName: string, itemAction: string }],
-        @Body('buyedItems') buyedItems: [{ itemName: string, itemQuantity: number }],
-        @Body('didLogged') didLogged: boolean,
-        @Body('didContacted') didContacted: boolean     
+        @Body() fullSession: fullSessionDto,
     ) {
         await this.sessionsService.updateSession(
-            userId, 
+            fullSession.userId, 
             sessionId, 
-            userIp, 
-            visitCounter,
-            visitDate, 
-            device, 
-            browser, 
-            location, 
-            reffer, 
-            pages, 
-            cartItems, 
-            buyedItems, 
-            didLogged, 
-            didContacted
+            fullSession.userIp, 
+            fullSession.visitCounter,
+            fullSession.visitDate, 
+            fullSession.device, 
+            fullSession.browser, 
+            fullSession.location, 
+            fullSession.reffer, 
+            fullSession.pages, 
+            fullSession.cartItems, 
+            fullSession.buyedItems, 
+            fullSession.didLogged, 
+            fullSession.didContacted,
+            fullSession.sessionScrap
         )
         return null;
     };
@@ -78,32 +68,38 @@ export class SessionsController {
     @Patch('pages/:id')
     async addSessionPages(
         @Param('id') sessionId: string,
-        @Body('name') name: string,
-        @Body('timeOn') timeOn: number
+        @Body() page: Page,
     ) {
-        await this.sessionsService.addSessionPages(sessionId, { name, timeOn} );
+        await this.sessionsService.addSessionPages(sessionId, page );
         return null;
     };
 
     @Patch('cartitems/:id')
     async addSessionCartItems(
         @Param('id') sessionId: string,
-        @Body('itemName') itemName: string,
-        @Body('itemAction') itemAction: string
+        @Body() cartItem: CartItem
     ) {
-        await this.sessionsService.addSessionCartItems(sessionId, { itemName, itemAction });
+        await this.sessionsService.addSessionCartItems(sessionId,cartItem);
         return null;
     };
 
     @Patch('buyeditems/:id')
     async addSessionBuyedItems(
         @Param('id') sessionId: string,
-        @Body('itemName') itemName: string,
-        @Body('itemQuantity') itemQuantity: number
+        @Body() buyedItem: BuyedItem
     ) {
-        await this.sessionsService.addSessionBuyedItems(sessionId, { itemName, itemQuantity });
+        await this.sessionsService.addSessionBuyedItems(sessionId, buyedItem);
         return null;
     };
+
+    @Patch('sessionscraps/:id')
+    async addSessionScrap(
+        @Param('id') sessionId: string,
+        @Body() sessionScrap: SessionScrap
+    ) {
+        await this.sessionsService.addSessionScrap(sessionId, sessionScrap);
+        return null;
+    }
 
     @Patch('logged/:id')
     async updateLoggedStatus(

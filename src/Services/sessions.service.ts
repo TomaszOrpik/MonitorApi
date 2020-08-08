@@ -2,6 +2,11 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { Session } from '../Models/session.model';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { type } from 'os';
+import { Page } from 'src/Models/page.dto';
+import { CartItem } from 'src/Models/cartItem.dto';
+import { BuyedItem } from 'src/Models/buyedItem.dto';
+import { SessionScrap } from 'src/Models/sessionScrap.dto';
 
 @Injectable()
 export class SessionsService {
@@ -20,15 +25,6 @@ export class SessionsService {
 
         let userId: string;
         let visitCounter: number;
-
-        if(sessionId == null ||
-            userIp == null ||
-            visitDate == null ||
-            device == null ||
-            browser == null ||
-            location == null ||
-            reffer == null)
-            throw new BadRequestException('Empty body request, missing data');
         
         await this.getUserId(userIp).then(
             id => { userId = id as string; }
@@ -52,6 +48,7 @@ export class SessionsService {
             buyedItems: [],
             didLogged: false,
             didContacted: false,
+            sessionScrap: []
         });
 
         newSession.visitCounter = visitCounter;
@@ -76,7 +73,8 @@ export class SessionsService {
             cartItems: ss.cartItems,
             buyedItems: ss.buyedItems,
             didLogged: ss.didLogged,
-            didContacted: ss.didContacted,           
+            didContacted: ss.didContacted,
+            sessionScrap: ss.sessionScrap
         }))
     };
 
@@ -96,7 +94,8 @@ export class SessionsService {
             cartItems: ss.cartItems,
             buyedItems: ss.buyedItems,
             didLogged: ss.didLogged,
-            didContacted: ss.didContacted  
+            didContacted: ss.didContacted,
+            sessionScrap: ss.sessionScrap
         }
     };
 
@@ -119,7 +118,8 @@ export class SessionsService {
             cartItems: ss.cartItems,
             buyedItems: ss.buyedItems,
             didLogged: ss.didLogged,
-            didContacted: ss.didContacted,           
+            didContacted: ss.didContacted,
+            sessionScrap: ss.sessionScrap
         }));
     };
 
@@ -138,6 +138,15 @@ export class SessionsService {
         buyedItems: [{ itemName: string, itemQuantity: number }],
         didLogged: boolean,
         didContacted: boolean,
+        sessionScrap: [{
+            windowWidth: number,
+            windowHeigth: number,
+            currentPage: string,
+            scrollTopPosition: number,
+            mouseX: number,
+            mouseY: number,
+            clickedItemId: string
+        }]
     ) {
         const updatedSession: Session = await this.findSession(sessionId);
         if(userId) updatedSession.userId = userId;
@@ -164,11 +173,15 @@ export class SessionsService {
         if(didLogged) updatedSession.didLogged = didLogged;
         if(didContacted) updatedSession.didContacted = didContacted;
 
+        if(!(sessionScrap == null))
+            for(let i = 0; i < sessionScrap.length; i++)
+                if(sessionScrap[i]) updatedSession.sessionScrap[i] = sessionScrap[i];
+
         updatedSession.save();
 
     };
 
-    async addSessionPages(sessionId: string, page: {name: string, timeOn: number}) {
+    async addSessionPages(sessionId: string, page: Page) {
         const session: Session = await this.findSession(sessionId);
         if(page.timeOn < 0) throw new BadRequestException('Time on page must be higher than 0');
         if(typeof page.timeOn !== "number") throw new BadRequestException('Time on page incorrect format');
@@ -178,7 +191,7 @@ export class SessionsService {
         session.save();
     };
 
-    async addSessionCartItems(sessionId: string, cartItems: {itemName: string, itemAction: string}) {
+    async addSessionCartItems(sessionId: string, cartItems: CartItem) {
         const session: Session = await this.findSession(sessionId);
         if(typeof sessionId !== 'string') throw new BadRequestException('Bad session id format');
         if(cartItems.itemAction !== "Add" && cartItems.itemAction !== "Remove") throw new BadRequestException('Item action must be Add or Remove');
@@ -188,7 +201,7 @@ export class SessionsService {
         session.save();
     };
 
-    async addSessionBuyedItems(sessionId: string, buyedItems: { itemName: string, itemQuantity: number}) {
+    async addSessionBuyedItems(sessionId: string, buyedItems: BuyedItem) {
         const session: Session = await this.findSession(sessionId);
         if(buyedItems.itemQuantity <= 0) throw new BadRequestException('Item quantity must be higher than 0');
         if(typeof buyedItems.itemQuantity !== "number") throw new BadRequestException('Item quantity incorrect format');
@@ -197,6 +210,26 @@ export class SessionsService {
 
         session.save();
     };
+
+    async addSessionScrap(sessionId: string, sessionScrap: SessionScrap) {
+        const session: Session = await this.findSession(sessionId);
+        if(sessionScrap.mouseX < 0) throw new BadRequestException('Mouse position cant be negative');
+        if(sessionScrap.mouseY < 0) throw new BadRequestException('Mouse position cant be negative');
+        if(sessionScrap.windowWidth <= 0) throw new BadRequestException('Window width must be higher than 0');
+        if(sessionScrap.windowHeigth <= 0) throw new BadRequestException('Window heigth must be higher than 0');
+        if(sessionScrap.scrollTopPosition < 0) throw new BadRequestException('Scroll position cant be negative');
+        if(typeof sessionScrap.windowWidth !== 'number') throw new BadRequestException('Window Width incorrect format');
+        if(typeof sessionScrap.windowHeigth !== "number") throw new BadRequestException('Window Heigth incorrect format');
+        if(typeof sessionScrap.currentPage !== 'string') throw new BadRequestException('Incorrect current page format');
+        if(typeof sessionScrap.scrollTopPosition !== 'number') throw new BadRequestException('Incorrect scroll top position format');
+        if(typeof sessionScrap.mouseX !== 'number') throw new BadRequestException('Mouse X position incorrect format');
+        if(typeof sessionScrap.mouseY !== 'number') throw new BadRequestException('Mouse Y position incorrect format');
+        if(typeof sessionScrap.clickedItemId !== 'string') throw new BadRequestException('Clicked Item Id incorrect format');
+
+        session.sessionScrap.push(sessionScrap);
+
+        session.save();
+    }
 
     async updateSessionLogged(sessionId: string, status: boolean) {
         const session: Session = await this.findSession(sessionId);

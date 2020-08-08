@@ -6,7 +6,10 @@ import { SessionsModule } from './Modules/sessions.module';
 import { UsersModule } from './Modules/users.module';
 
 @Module({
-  imports: [SessionsModule, UsersModule, MongooseModule.forRoot(
+  imports: [
+    UsersModule,
+    SessionsModule,
+    MongooseModule.forRoot(
     'mongodb+srv://admin:Start123@cluster0-986vv.azure.mongodb.net/usersactivity?retryWrites=true&w=majority'
   )],
   controllers: [AppController],

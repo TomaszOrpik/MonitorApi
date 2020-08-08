@@ -6,7 +6,7 @@ import * as mocks from './mocks';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
-  jest.setTimeout(30000);
+  jest.setTimeout(120000);
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -51,13 +51,6 @@ describe('AppController (e2e)', () => {
     })
     .expect(201)
     .expect('_session11')
-  });
-
-  it('Throws error if post data is empty', () => {
-    return request(app.getHttpServer())
-    .post('/sessions')
-    .send({ })
-    .expect(400)
   });
 
   it('/ GET Sessions', () => {
@@ -269,6 +262,247 @@ describe('AppController (e2e)', () => {
     .send({
       itemName: 'Tomato',
       itemQuantity: -1
+    })
+    .expect(400)
+  });
+
+  it('Insert data into sessionScrap array by session id', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(200)
+  });
+
+  it('Throws error if insert sessionScrap request got invalid session id', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session12')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(404)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid window width type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: '1920',
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid window heigth type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: '1080',
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid current page type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 1244,
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid scrollTopPosition type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: '0',
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid mouse X position type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: '126',
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid mouse Y position type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: '126',
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throw error if inser sessionScrap is send with invalid mouse Y position type', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: true
+    })
+    .expect(400)
+  });
+
+  //test of not zero or lower than zero for every numbervalue
+  it('Throws error if window width is lower than zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: -1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throws error if window width is zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 0,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throws error if window heigth is lower than zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: -1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throws error if window heigth is zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 0,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throws error if mouse X position is lower than zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: -126,
+      mouseY: 126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throws error if mouse Y position is lower than zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: 0,
+      mouseX: 126,
+      mouseY: -126,
+      clickedItemId: 'none'
+    })
+    .expect(400)
+  });
+
+  it('Throws error if scroll top position is lower than zero', () => {
+    return request(app.getHttpServer())
+    .patch('/sessions/sessionscraps/_session1')
+    .send({
+      windowWidth: 1920,
+      windowHeigth: 1080,
+      currentPage: 'home',
+      scrollTopPosition: -10,
+      mouseX: 126,
+      mouseY: 126,
+      clickedItemId: 'none'
     })
     .expect(400)
   });

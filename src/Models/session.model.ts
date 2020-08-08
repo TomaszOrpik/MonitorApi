@@ -15,8 +15,17 @@ const buyedItemsSchema = new mongoose.Schema({
     itemQuantity: { type: Number },
 });
 
-export const SessionSchema = new mongoose.Schema(
-{
+const sessionScrapSchema = new mongoose.Schema({
+    windowWidth: { type: Number },
+    windowHeight: { type: Number },
+    currentPage: { type: String },
+    scrollTopPosition: { type: Number },
+    mouseX: { type: Number },
+    mouseY: { type: Number },
+    clickedItemId: { type: String },
+})
+
+export const SessionSchema = new mongoose.Schema({
     userId: { type: String },
     sessionId: { type: String, required: true },
     userIp: { type: String, required: true },
@@ -30,9 +39,9 @@ export const SessionSchema = new mongoose.Schema(
     cartItems: [ cartItemsSchema ],
     buyedItems: [ buyedItemsSchema ],
     didLogged: { type: Boolean },
-    didContacted: { type: Boolean }
-}
-);
+    didContacted: { type: Boolean },
+    sessionScrap: [ sessionScrapSchema ]
+});
 
 export interface Session extends mongoose.Document {
     userId: string,
@@ -60,5 +69,16 @@ export interface Session extends mongoose.Document {
             itemQuantity: number
         }],
     didLogged: boolean,
-    didContacted: boolean
+    didContacted: boolean,
+    sessionScrap: [
+        {
+            windowWidth: number,
+            windowHeigth: number,
+            currentPage: string,
+            scrollTopPosition: number,
+            mouseX: number,
+            mouseY: number,
+            clickedItemId: string
+        }
+    ]
 }
