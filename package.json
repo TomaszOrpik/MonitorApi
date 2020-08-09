@@ -5,9 +5,13 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": "12.x"
+  },
   "scripts": {
+    "heroku-postbuild": "echo Skip builds on Heroku",
     "prebuild": "rimraf dist",
-    "postinstall": "npm run prestart:prod",
+    "postinstall": "npm run start:prod",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
