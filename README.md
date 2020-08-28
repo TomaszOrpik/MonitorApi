@@ -20,7 +20,7 @@ To make api work:
 APi have tested e2e connection with Jest.js framework, to see tests run `npm run test/e2e`
 
 Test Results:
-![tests](https://imgur.com/JMRNeeo)
+![tests](https://i.imgur.com/JMRNeeo.jpg)
 
 # Resource routes
 List of API routes:
